@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CS2 击杀集锦录制器</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+--bg:#141417;--pn:#1d1d22;--pn2:#25252b;--ln:rgba(255,255,255,.08);--ln2:rgba(255,255,255,.16);
+--tx:#ececf0;--tx2:#9a9aa4;--tx3:#6b6b76;
+--on:#d85a30;--on2:#b74a26;--grn:#22a06b;--amb:#d99a2b;--red:#e24b4a;--blu:#378add;
+}
+body{font:400 14px/1.6 "Segoe UI","Microsoft YaHei",system-ui,sans-serif;background:var(--bg);color:var(--tx);-webkit-font-smoothing:antialiased}
+.wrap{max-width:960px;margin:0 auto;padding:20px 16px 60px}
+.hd{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:4px}
+.hd h1{font-size:18px;font-weight:600}
+.badge{font-size:12px;padding:3px 11px;border-radius:20px;border:1px solid var(--ln2)}
+.badge.ok{color:#7ee2b0;border-color:rgba(34,160,107,.4)}
+.badge.no{color:#ff9c9c;border-color:rgba(226,75,74,.4)}
+.sub{color:var(--tx2);font-size:13px;margin-bottom:18px}
+.steps{display:flex;gap:0;margin-bottom:20px;border:1px solid var(--ln);border-radius:12px;overflow:hidden}
+.step{flex:1;padding:11px 14px;display:flex;align-items:center;gap:9px;background:var(--pn);color:var(--tx2);font-size:13px;cursor:default}
+.step .n{width:22px;height:22px;border-radius:50%;background:var(--pn2);border:1px solid var(--ln2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex:none}
+.step.act{background:var(--pn2);color:var(--tx)}
+.step.act .n{background:var(--on);border-color:var(--on);color:#fff}
+.step.done .n{background:var(--grn);border-color:var(--grn);color:#fff}
+.card{background:var(--pn);border:1px solid var(--ln);border-radius:12px;padding:18px;margin-bottom:16px}
+.card h2{font-size:15px;font-weight:600;margin-bottom:14px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.row label{font-size:13px;color:var(--tx2);min-width:70px}
+input[type=text],input[type=number],select{background:var(--pn2);border:1px solid var(--ln2);color:var(--tx);border-radius:8px;padding:8px 11px;font:inherit;font-size:13px}
+input[type=text]{flex:1;min-width:220px}
+input[type=number]{width:80px}
+select{min-width:140px}
+button{font:inherit;background:var(--pn2);border:1px solid var(--ln2);color:var(--tx);padding:9px 18px;border-radius:9px;cursor:pointer;font-size:13px}
+button:hover{background:#2e2e36}
+button.pri{background:var(--on);border-color:var(--on2);color:#fff;font-weight:600}
+button.pri:hover{background:var(--on2)}
+button.ghost{background:transparent}
+button:disabled{opacity:.4;cursor:not-allowed}
+.dlist{display:flex;flex-direction:column;gap:6px;max-height:340px;overflow:auto}
+.ditem{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--ln);border-radius:9px;cursor:pointer;transition:.12s}
+.ditem:hover{background:var(--pn2)}
+.ditem.sel{border-color:var(--on);background:rgba(216,90,48,.08)}
+.ditem .nm{font-weight:500;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ditem .meta{font-size:12px;color:var(--tx2);flex:none}
+.plist{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px}
+.pitem{padding:12px 14px;border:1px solid var(--ln);border-radius:9px;cursor:pointer;transition:.12s}
+.pitem:hover{background:var(--pn2)}
+.pitem.sel{border-color:var(--on);background:rgba(216,90,48,.08)}
+.pitem .pn{font-weight:600}
+.pitem .ps{font-size:12px;color:var(--tx3);font-family:ui-monospace,monospace}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:700px){.grid2{grid-template-columns:1fr}}
+.check{display:flex;align-items:center;gap:9px;padding:9px 12px;border:1px solid var(--ln);border-radius:9px;cursor:pointer;user-select:none}
+.check:hover{background:var(--pn2)}
+.check input{accent-color:var(--on);width:16px;height:16px}
+.check .cl{font-size:13px}
+.check .cd{font-size:11px;color:var(--tx3);display:block}
+.field{margin-bottom:13px}
+.field>label{display:block;font-size:13px;color:var(--tx2);margin-bottom:6px}
+.killlist{display:flex;flex-direction:column;gap:4px;max-height:260px;overflow:auto;font-size:13px}
+.killrow{display:flex;align-items:center;gap:10px;padding:6px 10px;border-radius:7px;background:var(--pn2)}
+.killrow .t{font-family:ui-monospace,monospace;color:var(--tx3);width:110px;flex:none}
+.killrow .w{flex:1;font-weight:500}
+.killrow .hs{color:var(--amb);font-size:11px;flex:none}
+.cmdbox{background:#0d0d10;border:1px solid var(--ln);border-radius:9px;padding:12px 14px;font-family:ui-monospace,Consolas,monospace;font-size:12px;color:#9fd3a8;white-space:pre-wrap;word-break:break-all;margin-bottom:10px;max-height:180px;overflow:auto}
+.logbox{background:#0d0d10;border:1px solid var(--ln);border-radius:9px;padding:12px 14px;font-family:ui-monospace,Consolas,monospace;font-size:12px;color:var(--tx2);white-space:pre-wrap;max-height:260px;overflow:auto;margin-top:10px}
+.barwrap{height:8px;background:var(--pn2);border-radius:5px;overflow:hidden;margin:10px 0}
+.barfill{height:100%;background:var(--on);border-radius:5px;width:0;transition:width .4s}
+.hint{font-size:12px;color:var(--tx3);margin-top:6px}
+.err{background:rgba(226,75,74,.1);border:1px solid rgba(226,75,74,.4);color:#ff9c9c;border-radius:9px;padding:12px 14px;font-size:13px;margin-bottom:12px}
+.okbox{background:rgba(34,160,107,.1);border:1px solid rgba(34,160,107,.4);color:#7ee2b0;border-radius:9px;padding:12px 14px;font-size:13px;margin-bottom:12px}
+.foot{display:flex;gap:10px;justify-content:space-between;align-items:center;margin-top:8px}
+.hidden{display:none}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid var(--tx3);border-top-color:var(--on);border-radius:50%;animation:sp 1s linear infinite;vertical-align:-2px;margin-right:6px}
+@keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hd">
+    <h1>CS2 击杀集锦录制器</h1>
+    <span class="badge no" id="csdmBadge">检测 CSDM…</span>
+    <span class="badge no" id="plugBadge">检测插件…</span>
+    <span class="badge" id="verBadge" style="color:var(--tx3)"></span>
+  </div>
+  <div class="sub" id="subTitle">选 demo → 选选手 → 配参数 → 一键录制击杀集锦（POV 视角 + 键盘可视化）</div>
+
+  <!-- CS2 更新后插件会被清掉，这里主动提示 -->
+  <div class="err hidden" id="plugWarn" style="margin-bottom:16px"></div>
+
+  <div class="row" style="margin-bottom:18px">
+    <button id="btnModeSingle" class="pri" style="min-width:104px">单个 demo</button>
+    <button id="btnModeBatch" class="ghost" style="min-width:104px">批量录制</button>
+    <span class="hint" id="modeHint" style="margin:0"></span>
+  </div>
+
+  <div class="steps" id="stepsBar">
+    <div class="step act" id="st1"><span class="n">1</span>选择 demo</div>
+    <div class="step" id="st2"><span class="n">2</span>选择选手</div>
+    <div class="step" id="st3"><span class="n">3</span>参数与录制</div>
+  </div>
+
+  <!-- 批量模式：一次录完整个文件夹 -->
+  <div class="card hidden" id="batchCard">
+    <h2>批量录制</h2>
+    <div class="row">
+      <label>demo 目录</label>
+      <input type="text" id="batchDir">
+      <button id="btnBatchScan">扫描</button>
+    </div>
+    <div class="hint" id="batchDirHint">点「扫描」看这个目录里有多少个 demo、会按什么顺序编号。</div>
+    <div class="row" style="margin-top:12px">
+      <label>选手</label>
+      <input type="text" id="batchPlayer" placeholder="昵称（如 donk666）或 SteamID（纯数字）">
+    </div>
+    <div class="hint">填 SteamID 最准；填昵称会在每个 demo 里按名字找，第一场找到就锁定该 SteamID 给后面复用。</div>
+    <div class="check" style="margin-top:12px">
+      <input type="checkbox" id="batchOverwrite">
+      <span class="cl">已存在的成品也重录<span class="cd">默认跳过（断点续录：中断后重跑只补没做完的）</span></span>
+    </div>
+    <div class="dlist" id="batchList" style="margin-top:12px"><div class="hint">尚未扫描</div></div>
+  </div>
+
+  <!-- Step 1 -->
+  <div class="card" id="step1">
+    <h2>选择 demo</h2>
+    <div class="row">
+      <label>扫描目录</label>
+      <input type="text" id="dirInput">
+      <button id="btnScan">扫描</button>
+    </div>
+    <div class="dlist" id="demoList"><div class="hint">点击「扫描」加载 demo 列表…</div></div>
+  </div>
+
+  <!-- Step 2 -->
+  <div class="card hidden" id="step2">
+    <h2>选择选手</h2>
+    <div class="hint" id="playerHint">解析中…</div>
+    <div class="plist" id="playerList"></div>
+    <div class="foot" style="margin-top:14px">
+      <button class="ghost" id="btnBack1">← 上一步（换 demo）</button>
+    </div>
+  </div>
+
+  <!-- Step 3 -->
+  <div class="card hidden" id="step3">
+    <h2>录制参数</h2>
+    <div class="grid2">
+      <div>
+        <div class="field">
+          <label>击杀片段（前后秒数）</label>
+          <div class="row" style="margin-bottom:0">
+            <span style="color:var(--tx2);font-size:13px">击杀前</span>
+            <input type="number" id="before" value="3" min="1" max="10">
+            <span style="color:var(--tx2);font-size:13px">秒，后</span>
+            <input type="number" id="after" value="3" min="1" max="10">
+            <span style="color:var(--tx2);font-size:13px">秒</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>画质档位</label>
+          <select id="preset" style="width:100%">
+            <option value="4k-high">4K 高画质（3840×2160 60fps，剪辑母版）</option>
+            <option value="4k">4K 标准（3840×2160 60fps）</option>
+            <option value="2k-high" selected>2K 高画质（2560×1440 60fps，推荐）</option>
+            <option value="2k">2K 标准（2560×1440 60fps）</option>
+            <option value="2k-30">2K 30fps（2560×1440，体积更小）</option>
+            <option value="1080p-high">1080p 高画质（1920×1080 60fps）</option>
+            <option value="1080p">1080p 标准</option>
+            <option value="preview">快速预览（720p，体积小）</option>
+          </select>
+          <div class="hint" id="presetHint"></div>
+        </div>
+        <div class="field">
+          <label>分辨率 / 帧率（覆盖档位，可选）</label>
+          <div class="row" style="margin-bottom:0">
+            <select id="res">
+              <option value="">跟随画质档位</option>
+              <option value="3840x2160">4K 3840×2160</option>
+              <option value="2560x1440">2K 2560×1440</option>
+              <option value="1920x1080">1080p 1920×1080</option>
+              <option value="1280x720">720p 1280×720</option>
+            </select>
+            <select id="fps" style="min-width:110px">
+              <option value="">跟随档位</option>
+              <option value="60">60 fps</option>
+              <option value="30">30 fps</option>
+            </select>
+          </div>
+          <div style="color:var(--tx3);font-size:12px;margin-top:6px">
+            画面发糊多半是<b>游戏内部分辨率低</b>。CSDM 按游戏设置渲染，
+            建议在 CS2 里把分辨率设成与你选的档位一致。
+          </div>
+        </div>
+        <div class="field">
+          <label>画面模式</label>
+          <select id="mode" style="width:100%">
+            <option value="full" selected>POV + HUD + 键盘（完整）</option>
+            <option value="hud">POV + HUD（血量 / 武器 / 弹药）</option>
+            <option value="keys">POV + 键盘可视化</option>
+            <option value="pure">纯净 POV（无 HUD 无键盘）</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>视角</label>
+          <div class="check" style="margin-bottom:7px"><input type="checkbox" id="pov" checked><span class="cl">POV 第一人称</span></div>
+          <div class="check" style="margin-bottom:7px"><input type="checkbox" id="xray"><span class="cl">显示 X 光</span></div>
+        </div>
+      </div>
+      <div>
+        <div class="field" id="keyOpts">
+          <label>键盘可视化</label>
+          <div class="row" style="margin-bottom:6px">
+            <span style="color:var(--tx2);font-size:13px">位置</span>
+            <select id="keyPos" style="min-width:110px">
+              <option value="bottom-left-high" selected>左下（避开 HUD）</option>
+              <option value="bottom-left">左下角</option>
+              <option value="bottom-right">右下角</option>
+              <option value="bottom-center">底部居中</option>
+              <option value="top-left">左上角</option>
+              <option value="top-center">顶部居中</option>
+              <option value="top-right">右上角</option>
+              <option value="center-left">左侧居中</option>
+              <option value="center-right">右侧居中</option>
+            </select>
+            <span style="color:var(--tx2);font-size:13px">大小</span>
+            <select id="keySize" style="min-width:70px">
+              <option value="0" selected>自动</option>
+              <option value="0.55">小</option>
+              <option value="0.8">中</option>
+              <option value="1.2">大</option>
+              <option value="1.6">特大</option>
+            </select>
+          </div>
+          <div class="row" style="margin-bottom:0">
+            <span style="color:var(--tx2);font-size:13px">透明度</span>
+            <select id="keyOpacity" style="min-width:80px">
+              <option value="0.85" selected>85%（推荐）</option>
+              <option value="0.7">70%</option>
+              <option value="0.5">50%</option>
+              <option value="1">100%</option>
+            </select>
+          </div>
+          <div class="row" style="margin-top:6px;margin-bottom:0">
+            <span style="color:var(--tx2);font-size:13px" title="只影响第 5 步「叠加键盘」的编码速度，与录制画质无关">叠加速度</span>
+            <select id="overlayPreset" style="min-width:150px">
+              <option value="veryfast" selected>速度优先（快 2.2 倍）</option>
+              <option value="fast">均衡</option>
+              <option value="medium">体积优先（小 ~46MB）</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>视觉特效</label>
+          <div class="row" style="margin-bottom:8px">
+            <span style="color:var(--tx2);font-size:13px">天空</span>
+            <select id="sky">
+              <option value="default">默认（不改）</option>
+              <option value="vertigoblue_hdr">蓝天白云</option>
+              <option value="vertigo_hdr">压抑阴天</option>
+              <option value="nukeblank">万里无云</option>
+              <option value="dustblank">沙二天空</option>
+            </select>
+          </div>
+          <div class="check" style="margin-bottom:7px"><input type="checkbox" id="noFlash" checked><span class="cl">去闪光弹白屏</span></div>
+          <div class="row" style="margin-bottom:0">
+            <span style="color:var(--tx2);font-size:13px">FOV</span>
+            <input type="number" id="fov" value="90" min="60" max="120">
+            <span style="color:var(--tx3);font-size:12px">滤镜建议后期在剪辑软件加</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>输出</label>
+      <div class="row">
+        <span style="color:var(--tx2);font-size:13px;min-width:52px">目录</span>
+        <input type="text" id="outDir" placeholder="留空 = 项目 output/videos">
+        <button class="ghost" id="btnOpenOutDir" style="padding:8px 14px;flex:none">打开目录</button>
+      </div>
+      <div class="row" style="margin-bottom:0">
+        <span style="color:var(--tx2);font-size:13px;min-width:52px" id="lblOutName">文件名</span>
+        <input type="text" id="outName" placeholder="留空 = keyviz_final.mp4">
+      </div>
+      <div class="hint" id="outHint"></div>
+    </div>
+
+    <div class="field" id="killField">
+      <label>击杀预览（共 <span id="killCount">0</span> 次击杀）</label>
+      <div class="killlist" id="killList"></div>
+    </div>
+
+    <div class="field hidden" id="cmdWrap">
+      <label>CSDM 命令预览</label>
+      <div class="cmdbox" id="cmdBox"></div>
+    </div>
+
+    <div class="err hidden" id="errBox"></div>
+    <div class="okbox hidden" id="okBox"></div>
+    <div class="hidden" id="batchProg" style="margin:10px 0">
+      <div class="okbox" id="batchHead" style="margin-bottom:10px">等待开始…</div>
+      <div class="dlist" id="batchResults"></div>
+    </div>
+    <div class="hidden" id="openDirWrap" style="margin:10px 0">
+      <button class="ghost" id="btnOpenDir">📂 打开输出目录</button>
+    </div>
+    <div class="barwrap hidden" id="barWrap"><div class="barfill" id="barFill"></div></div>
+    <div class="logbox hidden" id="logBox"></div>
+
+    <div class="foot">
+      <button class="ghost" id="btnBack2">← 上一步</button>
+      <button class="pri" id="btnRecord">▶ 开始录制</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const S={demo:null,players:[],player:null,kills:[],task:null,presets:[],defOut:'',prefs:{},
+         uiMode:'single',singleName:'',batchPrefix:'',batchFiles:[]};
+const $=id=>document.getElementById(id);
+
+async function api(path,body){
+  const r=await fetch(path,body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}:undefined);
+  return r.json();
+}
+
+function setStep(n){
+  S.step=n;
+  $('step1').classList.toggle('hidden',n!==1);
+  $('step2').classList.toggle('hidden',n!==2);
+  $('step3').classList.toggle('hidden',n!==3);
+  for(let i=1;i<=3;i++){
+    const s=$('st'+i);
+    s.classList.toggle('act',i===n);
+    s.classList.toggle('done',i<n);
+    s.style.cursor='pointer';
+  }
+}
+
+async function boot(){
+  const cfg=await api('/api/config');
+  $('csdmBadge').textContent=cfg.csdm_found?'CSDM 已安装':'CSDM 未安装';
+  $('csdmBadge').className='badge '+(cfg.csdm_found?'ok':'no');
+  if(cfg.version)$('verBadge').textContent='v'+cfg.version;
+  S.presets=cfg.presets||[];
+  S.defOut=cfg.default_out_dir||'';
+  S.prefs=cfg.prefs||{};
+  if(cfg.default_preset)$('preset').value=cfg.default_preset;
+  // 先把 demo 目录填成默认值，再用「上次的选择」覆盖（记忆功能）
+  if(cfg.default_dirs&&cfg.default_dirs.length)$('dirInput').value=cfg.default_dirs[0];
+  applyPrefs(S.prefs);
+  // 批量目录没记住过 → 跟着 demo 目录走
+  if(!$('batchDir').value.trim())$('batchDir').value=$('dirInput').value.trim();
+  renderPlugin(cfg.plugin);
+  scan();
+}
+
+// ── 记忆上次的选择 ───────────────────────────────────────────────
+// 服务端 recorder/prefs.json 持久化：demo 目录、输出位置、全部录制参数。
+// 换了浏览器/清了缓存也还在（比 localStorage 稳）。
+// ⚠️ out_name / batch_prefix 不在这张表里 —— 两个模式共用一个输入框，
+//    值先存进 S.singleName / S.batchPrefix，切换模式时对调（见 setMode）。
+const PREF_FIELDS=[
+  ['outDir','out_dir'],
+  ['before','before'],['after','after'],
+  ['preset','preset'],['res','res'],['fps','fps'],['mode','mode'],
+  ['pov','pov'],['xray','xray'],
+  ['keyPos','key_pos'],['keySize','key_scale'],['keyOpacity','key_opacity'],
+  ['overlayPreset','overlay_preset'],
+  ['sky','sky'],['noFlash','no_flash'],['fov','fov'],
+  ['batchDir','batch_dir'],['batchPlayer','batch_player'],['batchOverwrite','batch_overwrite'],
+];
+
+function applyPrefs(p){
+  if(!p)return;
+  PREF_FIELDS.forEach(([id,key])=>{
+    const v=p[key];
+    if(v===undefined||v===null||v==='')return;   // 空 = 用默认值
+    const el=$(id);if(!el)return;
+    if(el.type==='checkbox')el.checked=!!v;
+    else el.value=String(v);
+  });
+  S.singleName=p.out_name||'';
+  S.batchPrefix=p.batch_prefix||'';
+  $('outName').value=(S.uiMode==='batch')?S.batchPrefix:S.singleName;
+  if(p.demo_dir)$('dirInput').value=p.demo_dir;   // ① 上次的 demo 目录
+}
+
+function collectPrefs(){
+  const el=$('outName');
+  if(S.uiMode==='batch')S.batchPrefix=el.value.trim(); else S.singleName=el.value.trim();
+  const o={demo_dir:$('dirInput').value.trim(),out_name:S.singleName,batch_prefix:S.batchPrefix};
+  PREF_FIELDS.forEach(([id,key])=>{
+    const el=$(id);if(!el)return;
+    let v=el.type==='checkbox'?el.checked:el.value;
+    if(el.type==='number')v=+v;
+    o[key]=v;
+  });
+  return o;
+}
+
+let _prefTimer=null;
+function savePrefs(){
+  clearTimeout(_prefTimer);
+  _prefTimer=setTimeout(()=>{api('/api/prefs',collectPrefs()).catch(()=>{});},400);
+}
+
+// ── 模式切换：单个 demo / 批量录制 ────────────────────────────────
+function setMode(m){
+  if(S.uiMode===m)return;
+  const el=$('outName');
+  // 切换前先把当前框里的值收进对应的槽位，避免「填了 A 模式又被 B 覆盖掉」
+  if(S.uiMode==='batch')S.batchPrefix=el.value; else S.singleName=el.value;
+  S.uiMode=m;
+  el.value=(m==='batch')?S.batchPrefix:S.singleName;
+
+  const batch=(m==='batch');
+  $('btnModeSingle').className=batch?'ghost':'pri';
+  $('btnModeBatch').className=batch?'pri':'ghost';
+  $('stepsBar').classList.toggle('hidden',batch);
+  $('batchCard').classList.toggle('hidden',!batch);
+  $('killField').classList.toggle('hidden',batch);
+  $('subTitle').textContent=batch
+    ? '选 demo 文件夹 + 填一位选手 + 前缀 → 一次性按顺序录完整批'
+    : '选 demo → 选选手 → 配参数 → 一键录制击杀集锦（POV 视角 + 键盘可视化）';
+  $('modeHint').textContent=batch?'（批量是串行的，一个 demo 几分钟，中途别关窗口）':'';
+  $('lblOutName').textContent=batch?'文件名前缀':'文件名';
+  el.placeholder=batch?'如 donk1002 → 成品 donk1002-01.mp4':'留空 = keyviz_final.mp4';
+  $('btnRecord').textContent=batch?'▶ 开始批量录制':'▶ 开始录制';
+  $('btnBack2').classList.toggle('hidden',batch);
+
+  if(batch){
+    $('step1').classList.add('hidden');
+    $('step2').classList.add('hidden');
+    $('step3').classList.remove('hidden');
+    S.step=3;
+    if(!$('batchDir').value.trim())$('batchDir').value=$('dirInput').value.trim();
+  }else{
+    setStep(1);
+  }
+  savePrefs();
+  renderCmd();
+}
+
+// 渲染 CS2 插件状态（CS2 每次更新都会重置 gameinfo.gi 并清掉插件）
+function renderPlugin(p){
+  if(!p)return;
+  const ok=p.ok;
+  $('plugBadge').textContent=ok===true?'插件正常':(ok===false?'插件缺失':'插件未知');
+  $('plugBadge').className='badge '+(ok===true?'ok':(ok===false?'no':''));
+  const w=$('plugWarn');
+  if(ok===false){
+    const ver=(p.version||{}).PatchVersion||'?';
+    w.innerHTML='<b>⚠️ CS2 插件缺失，无法录制</b><br><br>'
+      +'当前 CS2 版本 <code>'+esc(ver)+'</code>。CS2 每次更新都会重置 '
+      +'<code>gameinfo.gi</code> 并把 CSDM 插件清掉，导致 HLAE 启动后游戏秒退、'
+      +'只报一个 <code>Game error</code>。<br><br>'
+      +'<span style="color:var(--tx3)">'+esc(p.reason||'')+'</span><br><br>'
+      +'<button class="ghost" id="btnFixPlug" style="border-color:rgba(226,75,74,.6);color:#ff9c9c">🔧 一键修复插件</button>'
+      +'<span id="fixMsg" style="margin-left:10px;font-size:12px;color:var(--tx2)"></span>';
+    w.classList.remove('hidden');
+    $('btnFixPlug').onclick=async()=>{
+      $('btnFixPlug').disabled=true;
+      $('fixMsg').textContent='修复中…';
+      const r=await api('/api/plugin/repair',{});
+      if(r.ok){
+        $('fixMsg').textContent='修复成功 ✓';
+        await boot();
+      }else{
+        $('fixMsg').textContent='失败：'+(r.error||'未知错误');
+        $('btnFixPlug').disabled=false;
+      }
+    };
+  }else{
+    w.classList.add('hidden');
+  }
+}
+
+async function scan(){
+  const dir=$('dirInput').value.trim();
+  if(!dir)return;
+  savePrefs();                                  // ② 记住这个目录，下次默认就是它
+  $('demoList').innerHTML='<div class="hint">扫描中…</div>';
+  const d=await api('/api/demos?dir='+encodeURIComponent(dir));
+  if(!d.demos||!d.demos.length){
+    $('demoList').innerHTML='<div class="hint">该目录没有 .dem 文件（目录可能已被移动/删除）</div>';
+    return
+  }
+  $('demoList').innerHTML=d.demos.map(f=>`
+    <div class="ditem" data-path="${f.path}">
+      <span class="nm">${f.name}</span>
+      <span class="meta">${f.size_mb} MB · ${f.mtime}</span>
+    </div>`).join('');
+  // ⚠️ 选择器要限定在 demoList 内 —— 批量卡片也用 .ditem，不限定会把两边的项混在一起
+  $('demoList').querySelectorAll('.ditem').forEach(el=>el.onclick=()=>pickDemo(el));
+}
+
+// 批量模式：扫一遍目录，按「文件名升序」预览编号结果
+async function batchScan(){
+  const dir=$('batchDir').value.trim();
+  if(!dir){$('batchDirHint').textContent='请先填 demo 目录';return}
+  savePrefs();
+  $('batchList').innerHTML='<div class="hint">扫描中…</div>';
+  const d=await api('/api/demos?dir='+encodeURIComponent(dir));
+  const files=(d.demos||[]).slice().sort((a,b)=>
+    a.name.toLowerCase()<b.name.toLowerCase()?-1:1);
+  S.batchFiles=files;
+  if(!files.length){
+    $('batchDirHint').textContent='该目录没有 .dem 文件（目录可能已被移动/删除）';
+    $('batchList').innerHTML='';return
+  }
+  let pre=($('outName').value.trim()||'clip').replace(/\.(mp4|mov|mkv)$/i,'');
+  const w=Math.max(2,String(files.length).length);
+  $('batchDirHint').innerHTML='共 <b>'+files.length+'</b> 个 demo，按文件名升序编号'
+    +'（成品已存在的会跳过，编号保持稳定）：';
+  $('batchList').innerHTML=files.map((f,i)=>{
+    const nn=String(i+1).padStart(w,'0');
+    return '<div class="ditem"><span class="nm">'+esc(f.name)+'</span>'
+      +'<span class="meta">→ '+esc(pre+'-'+nn+'.mp4')+'</span></div>';
+  }).join('');
+  renderCmd();
+}
+
+async function pickDemo(el){
+  $('demoList').querySelectorAll('.ditem').forEach(x=>x.classList.remove('sel'));
+  el.classList.add('sel');
+  S.demo=el.dataset.path;
+  S.player=null;S.kills=[];
+  setStep(2);
+  $('playerHint').textContent='解析选手…（大 demo 可能要十几秒）';
+  $('playerList').innerHTML='';
+  try{
+    const d=await api('/api/players',{demo:S.demo});
+    if(d.error){$('playerHint').textContent=d.error;return}
+    S.players=d.players;
+    $('playerHint').textContent='共 '+S.players.length+' 名选手，点击选择：';
+    $('playerList').innerHTML=S.players.map(p=>`
+      <div class="pitem" data-steamid="${p.steamid}">
+        <div class="pn">${p.name}</div>
+        <div class="ps">${p.steamid}</div>
+      </div>`).join('');
+    document.querySelectorAll('#playerList .pitem').forEach(el=>el.onclick=()=>pickPlayer(el));
+  }catch(e){$('playerHint').textContent='解析失败：'+e.message}
+}
+
+async function pickPlayer(el){
+  document.querySelectorAll('#playerList .pitem').forEach(x=>x.classList.remove('sel'));
+  el.classList.add('sel');
+  S.player={name:el.querySelector('.pn').textContent,steamid:el.dataset.steamid};
+  setStep(3);
+  $('killList').innerHTML='<div class="hint">解析击杀列表…</div>';
+  const d=await api('/api/kills',{demo:S.demo,steamid:S.player.steamid});
+  if(d.error){$('killList').innerHTML='<div class="hint">'+d.error+'</div>';return}
+  S.kills=d.kills;
+  $('killCount').textContent=S.kills.length;
+  $('killList').innerHTML=S.kills.slice(0,100).map(k=>`
+    <div class="killrow">
+      <span class="t">tick ${k.tick}</span>
+      <span class="w">${k.weapon} → ${k.victim}</span>
+      ${k.headshot?'<span class="hs">爆头</span>':''}
+    </div>`).join('')||'<div class="hint">无击杀</div>';
+  renderCmd();
+}
+
+function renderCmd(){
+  const batch=(S.uiMode==='batch');
+  if(!S.player&&!batch)return;      // 批量模式不需要先选 demo/选手
+  const mode=$('mode').value;
+  const preset=$('preset').value;
+  const resVal=$('res').value, fpsVal=$('fps').value;
+  const presetInfo=(S.presets||[]).find(p=>p.id===preset);
+  let w,h;
+  if(resVal){[w,h]=resVal.split('x').map(Number);}
+  else if(presetInfo){w=presetInfo.width;h=presetInfo.height;}
+  else {w=2560;h=1440;}
+  const fps=fpsVal?+fpsVal:(presetInfo?presetInfo.fps:60);
+  const cfg={
+    demo:S.demo,steamid:S.player?S.player.steamid:'（批量逐场解析）',
+    before:+$('before').value,after:+$('after').value,
+    pov:$('pov').checked,xray:$('xray').checked,
+    preset:preset,fps:fps,width:w,height:h,
+    mode:mode,no_flash:$('noFlash').checked,
+    sky:$('sky').value,fov:+$('fov').value,
+    key_pos:$('keyPos').value,key_scale:+$('keySize').value,key_opacity:+$('keyOpacity').value,
+    overlay_preset:$('overlayPreset').value,
+    out_dir:$('outDir').value.trim(),out_name:$('outName').value.trim(),
+  };
+  S.cfg=cfg;
+  const crf=presetInfo?presetInfo.crf:14, mr=presetInfo?presetInfo.maxrate:'45M';
+  const cmd=['csdm','video','"'+cfg.demo+'"','--mode','player','--steamids',cfg.steamid,
+    '--event','kills','--start-seconds-before',cfg.before,'--end-seconds-after',cfg.after];
+  if(cfg.pov)cmd.push('--perspective','player');
+  if(!cfg.xray)cmd.push('--no-show-x-ray');
+  cmd.push('--framerate',cfg.fps,'--width',cfg.width,'--height',cfg.height,
+    '--ffmpeg-video-container','mp4','--ffmpeg-crf',crf,
+    `--ffmpeg-output-parameters=-maxrate ${mr} -bufsize ${mr}`,
+    '--encoder-software','FFmpeg','--close-game-after-recording');
+  cmd.push(mode==='hud'||mode==='full'?'--no-show-only-death-notices':'--show-only-death-notices');
+  // 注意：刻意不加 --concatenate-sequences。CSDM 分段输出（文件名带 tick 区间）
+  // 才能让键盘可视化对齐按键；合并由我们后端在叠完键盘后自己做。
+  // 输出位置 / 文件名（留空 → 后端默认值）
+  const defName=(mode==='keys'||mode==='full')?'keyviz_final.mp4':'final.mp4';
+  const outD=cfg.out_dir||S.defOut||'（项目 output/videos）';
+  let outN=cfg.out_name||defName;
+  if(!/\.(mp4|mov|mkv)$/i.test(outN))outN+='.mp4';
+  if(batch){
+    let pre=cfg.out_name||'clip';
+    pre=pre.replace(/\.(mp4|mov|mkv)$/i,'');
+    $('outHint').innerHTML='成品会平铺输出到：<b>'+esc(outD)+'</b>，命名为 '
+      +'<b>'+esc(pre)+'-01.mp4</b>、<b>'+esc(pre)+'-02.mp4</b>…'
+      +'（编号按 demo 文件名升序，断点续录时编号不变）';
+  }else{
+    $('outHint').innerHTML='成片输出到：<b>'+esc(outD)+'</b>\\<b>'+esc(outN)+'</b>'
+      +(cfg.out_name?'':'　<span style="color:var(--tx3)">（未填，用默认名）</span>');
+  }
+  $('cmdBox').textContent=cmd.join(' ')
+    +'\n\n# 输出目录：'+outD
+    +'\n# 输出文件名：'+outN;
+  $('cmdWrap').classList.remove('hidden');
+  $('keyOpts').style.opacity=(mode==='keys'||mode==='full')?'1':'0.35';
+  // 档位提示：显示实际生效参数
+  const q=presetInfo||{};
+  $('presetHint').innerHTML='实际录制：<b>'+w+'×'+h+' @ '+fps+'fps</b>'
+    +' · CRF '+crf+' · 最大码率 '+mr
+    +'<br>预计体积：约 '+(Math.round(fps*w*h*crf/1e9*10)/10)+' MB/秒（仅供参考）';
+}
+
+['preset','res','fps','pov','xray','mode','keyPos','keySize','keyOpacity','overlayPreset','sky','noFlash','fov','before','after','outDir','outName','batchDir','batchPlayer','batchOverwrite'].forEach(id=>{
+  $(id).addEventListener('change',()=>{renderCmd();savePrefs();});
+});
+['dirInput','batchDir','batchPlayer'].forEach(id=>$(id).addEventListener('change',savePrefs));
+
+$('btnScan').onclick=scan;
+$('dirInput').addEventListener('keydown',e=>{if(e.key==='Enter')scan()});
+$('btnBatchScan').onclick=batchScan;
+$('batchDir').addEventListener('keydown',e=>{if(e.key==='Enter')batchScan()});
+$('btnModeSingle').onclick=()=>setMode('single');
+$('btnModeBatch').onclick=()=>setMode('batch');
+$('btnOpenOutDir').onclick=async()=>{
+  const d=$('outDir').value.trim()||S.defOut;
+  if(!d){alert('未设置输出目录');return}
+  const r=await api('/api/open-dir',{dir:d});
+  if(r.error)alert('目录还不存在：\n'+d+'\n\n开始录制后会自动创建。');
+};
+$('btnBack1').onclick=()=>setStep(1);
+$('btnBack2').onclick=()=>setStep(2);
+// 顶部步骤条也可点击（点已完成的步骤往回跳）
+$('st1').onclick=()=>{ if(S.step&&S.step>1) setStep(1); };
+$('st2').onclick=()=>{ if(S.player&&S.step===3) setStep(2); };
+$('st3').onclick=()=>{ if(S.player&&S.step===2) setStep(3); };
+
+$('btnRecord').onclick=async()=>{
+  renderCmd();
+  savePrefs();                                  // ③ 开录前先把当前参数落盘
+  $('errBox').classList.add('hidden');$('okBox').classList.add('hidden');
+  $('openDirWrap').classList.add('hidden');
+  $('logBox').classList.add('hidden');$('logBox').textContent='';
+  $('batchProg').classList.add('hidden');
+
+  const isBatch=(S.uiMode==='batch');
+  let payload=S.cfg;
+  if(isBatch){
+    payload=Object.assign({},S.cfg,{
+      batch_dir:$('batchDir').value.trim(),
+      batch_player:$('batchPlayer').value.trim(),
+      batch_overwrite:$('batchOverwrite').checked,
+    });
+    if(!payload.batch_dir){
+      $('errBox').textContent='请先填「demo 目录」';$('errBox').classList.remove('hidden');return}
+    if(!payload.batch_player){
+      $('errBox').textContent='请先填要录的选手（昵称或 SteamID）';$('errBox').classList.remove('hidden');return}
+    $('batchProg').classList.remove('hidden');
+    $('batchResults').innerHTML='';
+    $('batchHead').textContent='正在启动批量任务…';
+  }
+
+  const r=await api(isBatch?'/api/batch':'/api/record',payload);
+  if(r.csdm_missing){
+    $('errBox').textContent='未检测到 CS Demo Manager。\n\n请先安装：\n1. PostgreSQL v17+\n2. CS Demo Manager（连数据库）\n3. HLAE（CSDM 内一键装）\n\n装好后重启本页面即可。';
+    $('errBox').classList.remove('hidden');
+    return;
+  }
+  if(r.error){$('errBox').textContent=r.error;$('errBox').classList.remove('hidden');return}
+  S.task=r.task_id;
+  $('barWrap').classList.remove('hidden');
+  $('logBox').classList.remove('hidden');
+  $('btnRecord').disabled=true;
+  pollTask();
+};
+
+const MS=s=>{s=Math.max(0,Math.round(s||0));const m=Math.floor(s/60);return m?(m+'m'+String(s%60).padStart(2,'0')+'s'):(s+'s')};
+
+// 批量进度面板：第几个/共几个、当前 demo、阶段、已用、预计剩余 + 逐条结果
+function renderBatch(t){
+  const b=t.batch; if(!b)return;
+  const cur=b.current||'';
+  let head='<b>'+Math.min(b.done||0,b.total)+' / '+b.total+'</b> 个'
+    +(cur?'　当前：<code>'+esc(cur)+'</code>':'')
+    +(b.phase?'　阶段：<b>'+esc(b.phase)+'</b>':'');
+  head+='<br>成功 '+b.ok+' · 部分成功 '+b.partial+' · 跳过 '+b.skipped+' · 失败 '+b.failed
+    +'　已用 '+MS(t.elapsed);
+  if(b.eta_seconds)head+='　预计剩余约 '+MS(b.eta_seconds);
+  $('batchHead').innerHTML=head;
+  const st={ok:'成功',partial:'部分',skip:'跳过',fail:'失败'};
+  $('batchResults').innerHTML=(b.results||[]).map(r=>
+    '<div class="ditem"><span class="nm">'+esc(r.output||r.demo)+'</span>'
+    +'<span class="meta">'+(st[r.status]||r.status)
+    +(r.reason?' · '+esc(r.reason):'')+(r.seconds?' · '+MS(r.seconds):'')+'</span></div>'
+  ).join('');
+}
+
+async function pollTask(){
+  if(!S.task)return;
+  const t=await api('/api/task/'+S.task);
+  $('logBox').textContent=(t.log||[]).join('\n');
+  const isBatch=(t.kind==='batch');
+  if(isBatch&&t.batch)renderBatch(t);
+  if(t.status==='running'){
+    if(isBatch&&t.batch&&t.batch.total){
+      $('barFill').style.width=Math.round((t.batch.done||0)/t.batch.total*100)+'%';
+    }else{
+      $('barFill').style.width='85%';
+    }
+    setTimeout(pollTask,1500);
+  }else{
+    $('barFill').style.width='100%';
+    $('btnRecord').disabled=false;
+    if(t.status==='done'){
+      const vs=(t.videos||[]).map(v=>v.split(/[\\/]/).pop());
+      const shown=vs.slice(0,30);
+      let html=(isBatch?'批量录制结束！':'录制完成！')
+        +'<br><br>输出目录：<code>'+esc(t.output_dir||'')+'</code>';
+      if(vs.length){
+        html+='<br>共 '+vs.length+' 个视频：<br>'
+          +shown.map(v=>'&nbsp;&nbsp;• '+esc(v)).join('<br>')
+          +(vs.length>shown.length?'<br>&nbsp;&nbsp;…等共 '+vs.length+' 个':'');
+      }
+      if(isBatch&&t.batch&&(t.batch.failed||t.batch.skipped)){
+        html+='<br><br>跳过 '+t.batch.skipped+' 个、失败 '+t.batch.failed
+          +' 个 —— 原因见上方结果列表。';
+      }
+      $('okBox').innerHTML=html;
+      $('okBox').classList.remove('hidden');
+      $('openDirWrap').classList.remove('hidden');
+    }else{
+      $('errBox').textContent='录制出错：\n'+(t.log||[]).slice(-20).join('\n');
+      $('errBox').classList.remove('hidden');
+    }
+  }
+}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+$('btnOpenDir').onclick=async()=>{
+  const t=await api('/api/task/'+S.task);
+  if(t&&t.output_dir)await api('/api/open-dir',{dir:t.output_dir});
+};
+
+boot();
+</script>
+</body>
+</html>

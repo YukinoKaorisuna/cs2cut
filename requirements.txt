@@ -1,0 +1,16 @@
+# ───────── 录制链路 + 工作台（必装）─────────
+flask>=3.0
+demoparser2>=0.27.0      # 解析 .dem：选手列表、击杀列表、按键流
+zstandard>=0.22          # 解压 FACEIT 的 .dem.zst
+Pillow>=10.0             # 键盘可视化逐帧绘制
+numpy>=1.26
+
+# ───────── FACEIT 数据采集链路 ─────────
+requests>=2.31.0
+
+# ───────── 可选：按键悬浮窗 ─────────
+# 需要 tkinter（Windows 官方安装包自带；conda/精简 Python 可能没有）
+keyboard>=0.13.5
+
+# ───────── 仅 src/verify_*.py 这些校验脚本需要 ─────────
+pandas>=2.0

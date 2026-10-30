@@ -1,0 +1,37 @@
+{
+  "players": [
+    { "nickname": "donk666", "expect_elo": 4500, "real_name": "donk" },
+    { "nickname": "dem0nnnnnnnn", "expect_elo": 4500, "real_name": "dem0n" },
+    { "nickname": "nipl", "expect_elo": 4400, "real_name": "npl" },
+    { "nickname": "z1Nny", "expect_elo": 4400, "real_name": "z1Nny" },
+    { "nickname": "CEMEN_BAKIN", "expect_elo": 4400, "real_name": "kyousuke" },
+    { "nickname": "m0NESY", "expect_elo": 3500, "real_name": "m0NESY" },
+    { "nickname": "w0nderful", "expect_elo": 3500, "real_name": "w0nderful" },
+    { "nickname": "b1t", "expect_elo": 3300, "real_name": "b1t" },
+    { "nickname": "niko", "expect_elo": 3000, "real_name": "NiKo" },
+    { "nickname": "sh1ro", "expect_elo": 3000, "real_name": "sh1ro" },
+    { "nickname": "ZywOo", "expect_elo": 3000, "real_name": "ZywOo" },
+    { "nickname": "broky", "expect_elo": 2800, "real_name": "broky" },
+    { "nickname": "karrigan", "expect_elo": 2800, "real_name": "karrigan" },
+    { "nickname": "Twistzz", "expect_elo": 2800, "real_name": "Twistzz" },
+    { "nickname": "ropz", "expect_elo": 2200, "real_name": "ropz" }
+  ],
+  "_players_note": "FACEIT 昵称经接口实测校验；s1mple 无可查的活跃号，未收录。同一选手多处存同名假号，靠 expect_elo 兜底。",
+  "match_limit": 300,
+  "_match_limit_note": "FACEIT 历史接口 offset 硬上限 300 场（约回溯 6 个月），再往前取不到。",
+  "min_kills": 25,
+  "demo_download": {
+    "enabled": false,
+    "max_downloads": 10,
+    "output_dir": "demos"
+  },
+  "rate_limit": {
+    "requests_per_second": 2,
+    "retry_times": 3,
+    "retry_delay_seconds": 5
+  },
+  "dashboard": {
+    "output": "output/dashboard.html",
+    "title": "CS2 选手高光挖掘看板"
+  }
+}

@@ -1,0 +1,42 @@
+# ─────────── 产物 / 素材（体积巨大，绝不入库）───────────
+output/
+demos/
+logs/
+_archive/
+
+# ─────────── 依赖 / 虚拟环境 ───────────
+.venv/
+.venv_overlay/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# ─────────── 本机私有配置（含本地路径，每人不同）───────────
+recorder/prefs.json
+
+# ─────────── 内部交接包 / 助手工作区（不属于项目源码）───────────
+.handoff/
+.workbuddy/
+AGENTS.md
+
+# ─────────── 抓取到的原始数据（可由采集脚本重新生成）───────────
+data/
+
+# ─────────── tools/ 只保留 5 个通用脚本，其余是调试探针和二进制 ───────────
+tools/*
+!tools/check_dropframes.py
+!tools/decompress_demo.py
+!tools/e2e_workbench_prefs.py
+!tools/e2e_workbench_batch.py
+!tools/e2e_batch_loop.py
+
+# ─────────── 杂项 ───────────
+*.log
+*.bak
+*.bak_*
+*.tmp
+.DS_Store
+Thumbs.db
